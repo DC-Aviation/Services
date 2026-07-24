@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bureau - Services Piste</title>
+<style>
+body { font-family: Arial; padding: 20px; background:#0f172a; color:#e2e8f0; }
+h1 { color:#60a5fa; }
+table { width:100%; border-collapse:collapse; margin-top:20px; background:#1e2937; }
+th,td { border:1px solid #334155; padding:12px; text-align:left; }
+th { background:#1e40af; }
+tr:nth-child(even) { background:#243244; }
+button { padding:12px 20px; background:#3b82f6; color:white; border:none; border-radius:6px; }
+</style>
+</head>
+<body>
+<h1>📊 Services Piste - Temps réel</h1>
+<button onclick="chargerDonnees()">🔄 Rafraîchir maintenant</button>
+<table id="tableau"></table>
+
+<script>
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyLomW7E790mcLR2RzOnyDe34WSfQ1rkjNUk-yAhAbDLsmxe4rDzKwN9FxXD1EZa5e8/exec";
+
+function formatDate(value){
+    if(!value) return "";
+    const d = new Date(value);
+    if(isNaN(d)) return value;
+
+    return d.toLocaleDateString("fr-FR",{
+        day:"2-digit",
+        month:"2-digit",
+        year:"2-digit",
+        timeZone:"Europe/Paris"
+    });
+}
+
+function formatHeure(value){
+    if(!value) return "";
+    const d = new Date(value);
+    if(isNaN(d)) return value;
+
+    return d.toLocaleTimeString("fr-FR",{
+        hour:"2-digit",
+        minute:"2-digit",
+        hour12:false,
+        timeZone:"Europe/Paris"
+    });
+}
+
+async function chargerDonnees() {
+    try {
+        const res = await fetch(WEBAPP_URL);
+        const data = await res.json();
+
+        let html = `<tr>
+            <th>Date</th>
+            <th>Heure</th>
+            <th>Immat</th>
+            <th>Agent</th>
+            <th>Services</th>
+            <th>Commentaire</th>
+        </tr>`;
+
+        for(let i=1;i<data.length;i++){
+            const row=data[i];
+            const services=[];
+
+            if(row[4]) services.push("Café");
+            if(row[5]) services.push("Eau chaude");
+            if(row[6]) services.push(row[6]+" kg glace");
+            if(row[7]) services.push(row[7]+" sacs frigo");
+            if(row[8]) services.push(row[8]+" sacs congélateur");
+            if(row[9]) services.push(row[9]+" sacs ambiant");
+            if(row[10]) services.push("Poubelle");
+            if(row[11]) services.push(row[11]);
+            if(row[12]) services.push("Vidange WC");
+            if(row[13]) services.push("Eau potable");
+
+            html += `<tr>
+                <td>${formatDate(row[0])}</td>
+                <td>${formatHeure(row[1])}</td>
+                <td><strong>${row[2] || ''}</strong></td>
+                <td>${row[3] || ''}</td>
+                <td>${services.join(" • ")}</td>
+                <td>${row[14] || ''}</td>
+            </tr>`;
+        }
+
+        document.getElementById("tableau").innerHTML = html;
+    } catch(e){
+        console.error("Erreur :", e);
+    }
+}
+
+setInterval(chargerDonnees,10000);
+chargerDonnees();
+</script>
+</body>
+</html>
